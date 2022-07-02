@@ -1,0 +1,37 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "${APP_PORT:-8036}:80"
+    volumes:
+      - .:/src
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+      - db
+  app:
+    build:
+      context: .
+      dockerfile: docker/php-fpm/Dockerfile
+      target: build
+    volumes:
+        - .:/src
+    depends_on:
+      - db
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0
+    ports:
+      - "33071:3306"
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql/init-testing-db.sql:/docker-entrypoint-initdb.d/init-testing-db.sql
+    environment:
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: supersecret
+  redis:
+    image: redis:4
